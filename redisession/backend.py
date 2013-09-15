@@ -5,7 +5,13 @@ A redis backend for django session, support string and hash mode.
 import struct
 import time
 from django.conf import settings
-from django.contrib.sessions.backends.base import pickle, CreateError, SessionBase
+from django.contrib.sessions.backends.base import CreateError, SessionBase
+
+try:
+    from django.utils.six.moves import cPickle as pickle
+except ImportError:
+    import pickle
+
 
 conf = {
     'SERVER': {},

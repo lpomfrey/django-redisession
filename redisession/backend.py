@@ -7,11 +7,6 @@ import time
 from django.conf import settings
 from django.contrib.sessions.backends.base import CreateError, SessionBase
 
-try:
-    from django.utils.six.moves import cPickle as pickle
-except ImportError:
-    import pickle
-
 
 conf = {
     'SERVER': {},
@@ -57,6 +52,12 @@ class SessionStore(SessionBase):
     def __init__(self, session_key=None):
         self._redis = get_redis(conf['SERVER'])
         super(SessionStore, self).__init__(session_key)
+        if not hasattr(self, 'serializer'):
+            try:
+                from django.utils.six.moves import cPickle as pickle
+            except ImportError:
+                import pickle
+            self.serializer = pickle
 
     # XXX Try to partially comply w/ session API of newer Django (>= 1.4) for Django 1.3
     # Instead of checking Django version, test the existence directly.
@@ -69,7 +70,7 @@ class SessionStore(SessionBase):
             return self._session_key
 
     def encode(self, session_dict):
-        data = pickle.dumps(session_dict, pickle.HIGHEST_PROTOCOL)
+        data = self.serializer.dumps(session_dict)
         flag = 0
         if conf['COMPRESS_LIB'] and len(data) >= conf['COMPRESS_MIN_LENGTH']:
             compressed = compress_lib.compress(data)
@@ -82,9 +83,9 @@ class SessionStore(SessionBase):
         flag, data = ord(session_data[:1]), session_data[1:]
         if flag & FLAG_COMPRESSED:
             if conf['COMPRESS_LIB']:
-                return pickle.loads(compress_lib.decompress(data))
+                return self.serializer.loads(compress_lib.decompress(data))
             raise ValueError('redisession: found compressed data without COMPRESS_LIB specified.')
-        return pickle.loads(data)
+        return self.serializer.loads(data)
 
     def create(self):
         for i in xrange(10000):

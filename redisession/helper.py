@@ -1,7 +1,10 @@
-from django.conf import settings
+# -*- coding: utf-8 -*-
 import redis
+from django.conf import settings
 
 _connections = {}
+
+
 def get_redis(conf_name='default'):
     """simple helper for getting global Redis connection instances"""
     if conf_name not in _connections:

@@ -1,9 +1,11 @@
+# -*- coding: utf-8 -*-
 """
 A redis backend for django session, support string and hash mode.
 """
 
 import struct
 import time
+
 from django.conf import settings
 from django.contrib.sessions.backends.base import CreateError, SessionBase
 
@@ -13,8 +15,9 @@ conf = {
     'USE_HASH': True,
     'KEY_GENERATOR': lambda x: x.decode('hex'),
     'HASH_KEY_GENERATOR': lambda x: x[:4].decode('hex'),
-    'HASH_KEYS_CHECK_FOR_EXPIRY': lambda r: (reduce(lambda p,y :p.randomkey(),
-        xrange(100), r.pipeline()).execute()),
+    'HASH_KEYS_CHECK_FOR_EXPIRY':
+    lambda r: (reduce(
+        lambda p, y: p.randomkey(), xrange(100), r.pipeline()).execute()),
     'COMPRESS_LIB': 'snappy',
     'COMPRESS_MIN_LENGTH': 400,
     'LOG_KEY_ERROR': False
@@ -48,6 +51,7 @@ if conf['COMPRESS_LIB']:
 # TODO: flag for security verification?
 FLAG_COMPRESSED = 1
 
+
 class SessionStore(SessionBase):
     def __init__(self, session_key=None):
         self._redis = get_redis(conf['SERVER'])
@@ -59,7 +63,8 @@ class SessionStore(SessionBase):
                 import pickle
             self.serializer = pickle
 
-    # XXX Try to partially comply w/ session API of newer Django (>= 1.4) for Django 1.3
+    # XXX Try to partially comply w/ session API of newer Django (>= 1.4)
+    # for Django 1.3
     # Instead of checking Django version, test the existence directly.
     if not hasattr(SessionBase, '_get_or_create_session_key'):
         session_key = property(SessionBase._get_session_key)
@@ -84,7 +89,8 @@ class SessionStore(SessionBase):
         if flag & FLAG_COMPRESSED:
             if conf['COMPRESS_LIB']:
                 return self.serializer.loads(compress_lib.decompress(data))
-            raise ValueError('redisession: found compressed data without COMPRESS_LIB specified.')
+            raise ValueError('redisession: found compressed data without '
+                             'COMPRESS_LIB specified.')
         return self.serializer.loads(data)
 
     def create(self):
@@ -101,10 +107,12 @@ class SessionStore(SessionBase):
     if conf['USE_HASH']:
         def _make_key(self, session_key):
             try:
-                return (conf['HASH_KEY_GENERATOR'](session_key), conf['KEY_GENERATOR'](session_key))
+                return (conf['HASH_KEY_GENERATOR'](session_key),
+                        conf['KEY_GENERATOR'](session_key))
             except:
                 if conf['LOG_KEY_ERROR']:
-                    logger.warning('misconfigured key-generator or bad key "%s"' % session_key)
+                    logger.warning('misconfigured key-generator or bad key '
+                                   '"%s"' % session_key)
 
         def save(self, must_create=False):
             if must_create:
@@ -112,11 +120,12 @@ class SessionStore(SessionBase):
             else:
                 func = self._redis.hset
             session_data = self.encode(self._get_session(no_load=must_create))
-            expire_date = struct.pack('>I', int(time.time()+self.get_expiry_age()))
+            expire_date = struct.pack(
+                '>I', int(time.time() + self.get_expiry_age()))
             key = self._make_key(self._get_or_create_session_key())
             if key is None:
-                # XXX must_create = True w/ bad key or misconfigured KEY_GENERATOR,
-                # which has already been logged in _make_key.
+                # XXX must_create = True w/ bad key or misconfigured
+                # KEY_GENERATOR, which has already been logged in _make_key.
                 raise CreateError
             result = func(*key, value=expire_date+session_data)
             if must_create and not result:
@@ -148,13 +157,14 @@ class SessionStore(SessionBase):
             if key is not None:
                 self._redis.hdel(*key)
 
-    else: # not conf['USE_HASH']
+    else:  # not conf['USE_HASH']
         def _make_key(self, session_key):
             try:
                 return conf['KEY_GENERATOR'](session_key)
             except:
                 if conf['LOG_KEY_ERROR']:
-                    logger.warning('misconfigured key-generator or bad key "%s"' % session_key)
+                    logger.warning('misconfigured key-generator or bad key '
+                                   '"%s"' % session_key)
 
         def save(self, must_create=False):
             pipe = self._redis.pipeline()
@@ -165,11 +175,15 @@ class SessionStore(SessionBase):
             session_data = self.encode(self._get_session(no_load=must_create))
             key = self._make_key(self._get_or_create_session_key())
             if key is None:
-                # XXX must_create = True w/ bad key or misconfigured KEY_GENERATOR,
-                # which has already been logged in _make_key.
+                # XXX must_create = True w/ bad key or misconfigured
+                # KEY_GENERATOR, which has already been logged in _make_key.
                 raise CreateError
-            result = pipe(key, session_data).expire(key, self.get_expiry_age()).execute()
-            if must_create and not (result[0] and result[1]): # for Python 2.4 (Django 1.3)
+            result = pipe(key, session_data).expire(
+                key, self.get_expiry_age()
+            ).execute()
+
+            # for Python 2.4 (Django 1.3)
+            if must_create and not (result[0] and result[1]):
                 raise CreateError
 
         def load(self):

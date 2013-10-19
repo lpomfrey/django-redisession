@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from distutils.core import setup
 
 setup(
@@ -6,11 +7,20 @@ setup(
     license='MIT',
     author='Li Meng',
     author_email='liokmkoil@gmail.com',
-    packages=['redisession', 'redisession.management', 'redisession.management.commands'],
-    description='A Redis-based Django session engine for django.contrib.sessions.',
+    packages=[
+        'redisession',
+        'redisession.management',
+        'redisession.management.commands'
+    ],
+    description=
+    'A Redis-based Django session engine for django.contrib.sessions.',
     long_description=open('README.rst').read(),
     url='https://github.com/liokm/django-redisession',
     download_url='https://github.com/liokm/django-redisession',
+    install_requires=[
+        'django',
+        'redis',
+    ],
     classifiers=[
         'Development Status :: 4 - Beta',
         'Environment :: Web Environment',

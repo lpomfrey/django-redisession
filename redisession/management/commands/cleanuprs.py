@@ -1,9 +1,14 @@
+# -*- coding: utf-8 -*-
 import struct
 import time
+
 from django.core.management.base import NoArgsCommand
 
+
 class Command(NoArgsCommand):
+
     help = """Clean out expired sessions from redisession data."""
+
     def handle_noargs(self, **options):
         from redisession.backend import conf, get_redis
         # don't bother to check if hash mode is disabled

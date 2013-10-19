@@ -75,7 +75,7 @@ class SessionStore(SessionBase):
             return self._session_key
 
     def encode(self, session_dict):
-        data = self.serializer.dumps(session_dict)
+        data = self.serializer().dumps(session_dict)
         flag = 0
         if conf['COMPRESS_LIB'] and len(data) >= conf['COMPRESS_MIN_LENGTH']:
             compressed = compress_lib.compress(data)
@@ -88,10 +88,10 @@ class SessionStore(SessionBase):
         flag, data = ord(session_data[:1]), session_data[1:]
         if flag & FLAG_COMPRESSED:
             if conf['COMPRESS_LIB']:
-                return self.serializer.loads(compress_lib.decompress(data))
+                return self.serializer().loads(compress_lib.decompress(data))
             raise ValueError('redisession: found compressed data without '
                              'COMPRESS_LIB specified.')
-        return self.serializer.loads(data)
+        return self.serializer().loads(data)
 
     def create(self):
         for i in xrange(10000):

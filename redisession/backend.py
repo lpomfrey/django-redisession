@@ -61,7 +61,7 @@ class SessionStore(SessionBase):
                 from django.utils.six.moves import cPickle as pickle
             except ImportError:
                 import pickle
-            self.serializer = pickle
+            self.serializer = lambda: pickle
 
     # XXX Try to partially comply w/ session API of newer Django (>= 1.4)
     # for Django 1.3

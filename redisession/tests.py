@@ -21,9 +21,6 @@ class RedisSessionTests(SessionTestsMixin, unittest.TestCase):
         self.backend = SessionStore
         self.session = self.backend()
 
-    def test_decode_django12(self):
-        "We don't support Django 1.2 ever."
-
     def test_delete(self):
         self.session.save()
         self.session.delete(self.session.session_key)

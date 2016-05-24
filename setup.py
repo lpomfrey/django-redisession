@@ -17,7 +17,7 @@ def get_version(package):
     ).group(1)
 
 
-version = get_version('debreach')
+version = get_version('redisession')
 
 
 if sys.argv[-1] == 'publish':
